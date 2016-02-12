@@ -1,0 +1,58 @@
+﻿<Window x:Class="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SampleWpfApp"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Window.DataContext>
+        <local:MainWindowViewModel/>
+    </Window.DataContext>
+    <Grid>
+        <TabControl x:Name="tabControl">
+            <TabItem Header="Progress">
+                <Grid Background="#FFE5E5E5">
+                    <ItemsControl ItemsSource="{Binding LineProgresses}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                        <RowDefinition/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="計画"/>
+                                    <TextBlock Text="{Binding Plan.Value}" Grid.Column="1"/>
+                                    <TextBlock Text="実績" Grid.Row="1"/>
+                                    <TextBlock Text="{Binding Path=Actual.Value}" Grid.Column="1" Grid.Row="1"/>
+                                    <TextBlock Text="差異" Grid.Row="2"/>
+                                    <TextBlock Text="{Binding Diff.Value}" Grid.Column="1" Grid.Row="2"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Work items">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+            <TabItem Header="Charts">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+            <TabItem Header="Signals">
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+        </TabControl>
+
+    </Grid>
+</Window>
