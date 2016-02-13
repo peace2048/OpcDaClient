@@ -11,5 +11,6 @@ namespace OpcDaClient.RcwWrapper
         void AddItems(OpcItemDefine[] items);
         DaValue[] Read(int[] serverHandles);
         IDisposable Watch(IOpcDataCallback callback);
+        int[] Write(int[] serverHandles, object[] values);
     }
 }

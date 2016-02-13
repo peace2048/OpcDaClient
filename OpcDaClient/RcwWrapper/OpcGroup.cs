@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.ComTypes;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OpcDaClient.RcwWrapper
 {
-    class OpcGroup : Opc.Ua.Com.Client.ComObject, IOpcGroup, OpcRcw.Da.IOPCDataCallback
+    internal class OpcGroup : Opc.Ua.Com.Client.ComObject, IOpcGroup, OpcRcw.Da.IOPCDataCallback
     {
+        private IOpcDataCallback _callback;
+
         public OpcGroup(object unknown)
         {
             this.Unknown = unknown;
@@ -38,7 +36,6 @@ namespace OpcDaClient.RcwWrapper
             }
             catch (Exception ex)
             {
-
             }
             finally
             {
@@ -121,7 +118,6 @@ namespace OpcDaClient.RcwWrapper
             }
             catch (Exception ex)
             {
-
             }
             finally
             {
@@ -154,7 +150,6 @@ namespace OpcDaClient.RcwWrapper
             return results;
         }
 
-        private IOpcDataCallback _callback;
         public IDisposable Watch(IOpcDataCallback callback)
         {
             _callback = callback;
@@ -166,6 +161,25 @@ namespace OpcDaClient.RcwWrapper
                 conn.Dispose();
                 _callback = null;
             });
+        }
+
+        public int[] Write(int[] serverHandles, object[] values)
+        {
+            var errors = IntPtr.Zero;
+            const string methodName = "IOPCSyncIO.Write";
+            try
+            {
+                var server = BeginComCall<OpcRcw.Da.IOPCSyncIO>(methodName, true);
+                server.Write(serverHandles.Length, serverHandles, values, out errors);
+            }
+            catch (Exception ex)
+            {
+            }
+            finally
+            {
+                EndComCall(methodName);
+            }
+            return Opc.Ua.Com.ComUtils.GetInt32s(ref errors, serverHandles.Length, true);
         }
     }
 }

@@ -3,7 +3,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,24 +10,45 @@ namespace OpcDaClient
 {
     public sealed class DaClient : IDisposable
     {
+        private static readonly ILog _logger = LogManager.GetLogger(typeof(DaClient));
+
+        private readonly Sequence _clientHandleSequence = new Sequence(0, int.MaxValue);
         private IServerFactory _factory;
-        private IOpcServer _server;
         private IOpcGroup _group;
+        private IOpcServer _server;
         private ConcurrentDictionary<string, int> _serverHandles;
 
         public DaClient(IServerFactory factory)
         {
+            _logger.Trace($".ctor( {factory} )");
+            if (factory == null)
+            {
+                throw new ArgumentNullException(nameof(factory));
+            }
             _factory = factory;
         }
 
         public void Connect(string progId)
         {
+            _logger.Trace($"Connect( {progId ?? "<null>"} )");
             if (_server != null)
             {
                 throw new InvalidOperationException("既にOPC Serverに接続されています。");
             }
+            if (progId == null)
+            {
+                throw new ArgumentNullException(nameof(progId));
+            }
             _server = _factory.CreateFromProgId(progId);
-            _group = _server.AddGroup("default", false, 1000, 0, 0);
+            if (_server == null)
+            {
+                throw new NullReferenceException(nameof(_server));
+            }
+            _group = _server.AddGroup("default", true, 1000, 0, 0);
+            if (_group == null)
+            {
+                throw new NullReferenceException(nameof(_group));
+            }
             _serverHandles = new ConcurrentDictionary<string, int>();
         }
 
@@ -45,14 +65,37 @@ namespace OpcDaClient
             _serverHandles = null;
         }
 
-        internal IOpcGroup CreateGroup(int updateRate, float deadband, int localeId)
+        public void Dispose()
         {
-            return _server.AddGroup(string.Empty, true, updateRate, deadband, localeId);
+            _serverHandles = null;
+            Interlocked.Exchange(ref _group, null)?.Dispose();
+            Interlocked.Exchange(ref _server, null)?.Dispose();
         }
 
         public void Read(IEnumerable<DaItem> items)
         {
-            var handles = items.Select(_ => _serverHandles.GetOrAdd(
+            _logger.Trace($"Read( {items} )");
+            if (items == null)
+            {
+                throw new ArgumentNullException(nameof(items));
+            }
+            var handles = GetServerHandles(items);
+            var results = _group.Read(handles);
+            items.Zip(results,
+                (item, result) =>
+                {
+                    item.Result.ErrorCode = result.ErrorCode;
+                    item.Result.Quality = result.Quality;
+                    item.Result.Timestamp = result.Timestamp;
+                    item.Result.Value = result.Value;
+                    return 0;
+                })
+                .Sum();
+        }
+
+        private int[] GetServerHandles(IEnumerable<DaItem> items)
+        {
+            return items.Select(_ => _serverHandles.GetOrAdd(
                 _.Node.ItemId,
                 itemId =>
                 {
@@ -61,20 +104,7 @@ namespace OpcDaClient
                     return def.ServerHandle;
                 }))
                 .ToArray();
-            items.Zip(
-                _group.Read(handles),
-                (item, result) =>
-                {
-                    item.Result.ErrorCode = result.ErrorCode;
-                    item.Result.Quality = result.Quality;
-                    item.Result.Timestamp = result.Timestamp;
-                    item.Result.Value = result.Value;
-                    return item;
-                })
-                .Count();
         }
-
-        private readonly Sequence _clientHandleSequence = new Sequence(0, int.MaxValue);
 
         public DaMonitor Watch(IEnumerable<DaItem> items, TimeSpan updateRate, float deadband, int localeId)
         {
@@ -90,11 +120,23 @@ namespace OpcDaClient
             monitor.Attach(group, _clientHandleSequence);
         }
 
-        public void Dispose()
+        public void Write(IEnumerable<DaItem> items)
         {
-            _serverHandles = null;
-            Interlocked.Exchange(ref _group, null)?.Dispose();
-            Interlocked.Exchange(ref _server, null)?.Dispose();
+            var handles = GetServerHandles(items);
+            var values = items.Select(_ => _.RawValue).ToArray();
+            var errors = _group.Write(handles, values);
+            items.Zip(errors,
+                (item, err) =>
+                {
+                    item.Result.ErrorCode = err;
+                    return 0;
+                })
+                .Sum();
+        }
+
+        internal IOpcGroup CreateGroup(int updateRate, float deadband, int localeId)
+        {
+            return _server.AddGroup(string.Empty, true, updateRate, deadband, localeId);
         }
     }
 }
