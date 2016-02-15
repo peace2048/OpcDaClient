@@ -42,4 +42,12 @@ namespace OpcDaClient
             return Result.Select(_ => Value).Subscribe(observer);
         }
     }
+
+    public class DaItemString : DaItem<string>
+    {
+        public DaItemString(System.Text.Encoding encoding, int byteLength)
+        {
+            Converter = new ItemValueConverterString { Encoding = encoding, ByteLength = byteLength };
+        }
+    }
 }

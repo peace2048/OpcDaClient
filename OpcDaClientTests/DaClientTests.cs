@@ -35,6 +35,13 @@ namespace OpcDaClient.Tests
                 var item = new DaItem { Node = new DaNode { ItemId = "AAA" } };
                 target.Read(new[] { item });
                 item.RawValue.Should().Be(0);
+
+                var stringItem = new DaItemString(Encoding.Default, 4) { Node = new DaNode { ItemId = "BBB" }, Value = "ABC" };
+                stringItem.Value = "ABC";
+                stringItem.RawValue.Should().As<short[]>();
+                ((short[])stringItem.RawValue).Should().Equal(0x4241, 0x43);
+                stringItem.Value.Should().Be("ABC\0");
+                //target.Write(new[] { item });
             }
             groupMock.VerifyAll();
         }
