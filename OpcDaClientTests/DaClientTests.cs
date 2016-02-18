@@ -16,34 +16,6 @@ namespace OpcDaClient.Tests
         [TestMethod()]
         public void ConnectTest()
         {
-            var groupMock = new Mock<RcwWrapper.IOpcGroup>();
-            groupMock.Setup(_ => _.AddItems(It.IsAny<RcwWrapper.OpcItemDefine[]>())).Callback<RcwWrapper.OpcItemDefine[]>(_ => new PrivateObject(_[0]).SetProperty(nameof(RcwWrapper.OpcItemDefine.ServerHandle), 1));
-            groupMock.Setup(_ => _.Read(new[] { 1 })).Returns(new[] { new DaValue { Value = 0 } });
-            groupMock.Setup(_ => _.Dispose());
-
-            var serverMock = new Mock<RcwWrapper.IOpcServer>();
-            serverMock.Setup(_ => _.AddGroup("default", true, 1000, 0, 0)).Returns(groupMock.Object);
-            serverMock.Setup(_ => _.Dispose());
-
-            var factoryMock = new Mock<IServerFactory>();
-            factoryMock.Setup(factory => factory.CreateFromProgId("aaa")).Returns(serverMock.Object);
-
-            //var target = new DaClient(factoryMock.Object);
-            using (var target = new DaClient(factoryMock.Object))
-            {
-                target.Connect("aaa");
-                var item = new DaItem { Node = new DaNode { ItemId = "AAA" } };
-                target.Read(new[] { item });
-                item.RawValue.Should().Be(0);
-
-                var stringItem = new DaItemString(Encoding.Default, 4) { Node = new DaNode { ItemId = "BBB" }, Value = "ABC" };
-                stringItem.Value = "ABC";
-                stringItem.RawValue.Should().As<short[]>();
-                ((short[])stringItem.RawValue).Should().Equal(0x4241, 0x43);
-                stringItem.Value.Should().Be("ABC\0");
-                //target.Write(new[] { item });
-            }
-            groupMock.VerifyAll();
         }
     }
 }

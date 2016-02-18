@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using OpcDaClient.RcwWrapper;
 using System.Reactive.Disposables;
 using System.Reactive.Subjects;
+using OpcDaClient.Rcw;
 
 namespace OpcDaClient
 {
-    public class DaMonitor : RcwWrapper.IOpcDataCallback, IDisposable, IObservable<List<DaItem>>
+    public class DaMonitor : IDisposable, IObservable<List<DaItem>>
     {
-        private RcwWrapper.IOpcGroup _group;
+        private OpcGroup _group;
         private List<ItemClass> _items = new List<ItemClass>();
         private IDisposable _disposable = Disposable.Empty;
 
@@ -23,9 +23,9 @@ namespace OpcDaClient
         {
             if (_group != null)
             {
-                var def = new RcwWrapper.OpcItemDefine { IsActive = true, ItemId = item.Node.ItemId, ClientHandle = _clientHandleSequence.GetNext() };
-                _group.AddItems(new[] { def });
-                _items.Add(new ItemClass { ClientHandle = def.ClientHandle, Item = item, ServerHandle = def.ServerHandle });
+                var def = new OpcItemDefine { IsActive = true };
+                var result = _group.AddItems(new[] { def });
+                _items.Add(new ItemClass { ClientHandle = def.ClientHandle, Item = item, ServerHandle = result[0].ServerHandle });
             }
             else
             {
@@ -38,8 +38,14 @@ namespace OpcDaClient
             if (_group != null)
             {
                 var defs = items.Select(_ => new OpcItemDefine { IsActive = true, ItemId = _.Node.ItemId, ClientHandle = _clientHandleSequence.GetNext() }).ToArray();
-                _group.AddItems(defs);
-                _items.AddRange(defs.Select(_ => new ItemClass { ClientHandle = _.ClientHandle, Item = items.First(__ => __.Node.ItemId == _.ItemId), ServerHandle = _.ServerHandle }));
+                var results = _group.AddItems(defs);
+                _items.AddRange(
+                    items.Zip(defs, (item, def) => new ItemClass { Item = item, ClientHandle = def.ClientHandle })
+                    .Zip(results, (item, result) =>
+                    {
+                        item.ServerHandle = result.ServerHandle;
+                        return item;
+                    }));
             }
             else
             {
@@ -48,7 +54,7 @@ namespace OpcDaClient
         }
 
         private Sequence _clientHandleSequence;
-        internal void Attach(IOpcGroup group, Sequence sequence)
+        internal void Attach(OpcGroup group, Sequence sequence)
         {
             if (_group != null)
             {
@@ -57,41 +63,40 @@ namespace OpcDaClient
             _group = group;
             _clientHandleSequence = sequence;
             var defs = _items.Select(_ => new OpcItemDefine { ClientHandle = _clientHandleSequence.GetNext(), IsActive = true, ItemId = _.Item.Node.ItemId }).ToArray();
-            _group.AddItems(defs);
+            var results = _group.AddItems(defs);
             _items.Zip(defs, (item, def) =>
             {
                 item.ClientHandle = def.ClientHandle;
-                item.ServerHandle = def.ServerHandle;
+                item.ServerHandle = results[0].ServerHandle;
                 return 0;
             })
             .Sum();
-            var disposable = _group.Watch(this);
+            _group.DataChange += group_DataChange;
             _disposable = Disposable.Create(() =>
             {
-                disposable.Dispose();
-                _items.Clear();
-                _group.Dispose();
-                _group = null;
+                _group.DataChange -= group_DataChange;
             });
+        }
+
+        private void group_DataChange(object sender, DataChangeEventArgs e)
+        {
+            _subject.OnNext(e.Items.Select(_ => {
+                var item = _items.FirstOrDefault(__ => _.ClientHandle == __.ClientHandle)?.Item;
+                if (item != null)
+                {
+                    var value = item.Result;
+                    value.ErrorCode = _.ErrorCode;
+                    value.Quality = _.Quality;
+                    value.Timestamp = _.Timestamp;
+                    value.Value = _.DataValue;
+                }
+                return item;
+            }).ToList());
         }
 
         public void Dispose()
         {
             _disposable.Dispose();
-        }
-
-        public void OnDataChanged(int transactionId, OpcDataChanged[] values)
-        {
-            _subject.OnNext(values.Join(_items, a => a.ClientHandle, b => b.ClientHandle, (a, b) =>
-            {
-                var value = b.Item.Result;
-                value.ErrorCode = a.ErrorCode;
-                value.Quality = a.Quality;
-                value.Timestamp = a.Timestamp;
-                value.Value = a.Value;
-                return b.Item;
-            })
-            .ToList());
         }
 
         private Subject<List<DaItem>> _subject = new Subject<List<DaItem>>();

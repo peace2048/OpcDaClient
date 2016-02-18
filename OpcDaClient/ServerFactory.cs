@@ -1,4 +1,4 @@
-﻿using OpcDaClient.RcwWrapper;
+﻿using OpcDaClient.Rcw;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ namespace OpcDaClient
 {
     public class ServerFactory : IServerFactory
     {
-        public IOpcServer CreateFromProgId(string progId)
+        public OpcServer CreateFromProgId(string progId)
         {
             using (var factory = new Opc.Ua.Com.ServerFactory())
             {

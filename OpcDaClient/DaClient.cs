@@ -1,4 +1,4 @@
-﻿using OpcDaClient.RcwWrapper;
+﻿using OpcDaClient.Rcw;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,8 +14,8 @@ namespace OpcDaClient
 
         private readonly Sequence _clientHandleSequence = new Sequence(0, int.MaxValue);
         private IServerFactory _factory;
-        private IOpcGroup _group;
-        private IOpcServer _server;
+        private OpcGroup _group;
+        private OpcServer _server;
         private ConcurrentDictionary<string, int> _serverHandles;
 
         public DaClient(IServerFactory factory)
@@ -44,7 +44,7 @@ namespace OpcDaClient
             {
                 throw new NullReferenceException(nameof(_server));
             }
-            _group = _server.AddGroup("default", true, 1000, 0, 0);
+            _group = _server.AddGroup("default", true, 1000, 0, 0, 0);
             if (_group == null)
             {
                 throw new NullReferenceException(nameof(_group));
@@ -80,14 +80,14 @@ namespace OpcDaClient
                 throw new ArgumentNullException(nameof(items));
             }
             var handles = GetServerHandles(items);
-            var results = _group.Read(handles);
+            var results = _group.Read(OpcDataSource.Device, handles);
             items.Zip(results,
                 (item, result) =>
                 {
                     item.Result.ErrorCode = result.ErrorCode;
                     item.Result.Quality = result.Quality;
                     item.Result.Timestamp = result.Timestamp;
-                    item.Result.Value = result.Value;
+                    item.Result.Value = result.DataValue;
                     return 0;
                 })
                 .Sum();
@@ -100,8 +100,8 @@ namespace OpcDaClient
                 itemId =>
                 {
                     var def = new OpcItemDefine { IsActive = true, ItemId = itemId, ClientHandle = _clientHandleSequence.GetNext() };
-                    _group.AddItems(new[] { def });
-                    return def.ServerHandle;
+                    var results = _group.AddItems(new[] { def });
+                    return results[0].ServerHandle;
                 }))
                 .ToArray();
         }
@@ -116,7 +116,8 @@ namespace OpcDaClient
 
         public void Watch(DaMonitor monitor, TimeSpan updateRate, float deadband, int localeId)
         {
-            var group = _server.AddGroup(string.Empty, true, (int)updateRate.TotalMilliseconds, deadband, localeId);
+            var clientHandle = _clientHandleSequence.GetNext();
+            var group = _server.AddGroup(string.Empty, true, (int)updateRate.TotalMilliseconds, clientHandle, deadband, localeId);
             monitor.Attach(group, _clientHandleSequence);
         }
 
@@ -134,9 +135,10 @@ namespace OpcDaClient
                 .Sum();
         }
 
-        internal IOpcGroup CreateGroup(int updateRate, float deadband, int localeId)
+        internal OpcGroup CreateGroup(int updateRate, float deadband, int localeId)
         {
-            return _server.AddGroup(string.Empty, true, updateRate, deadband, localeId);
+            var clientHandle = _clientHandleSequence.GetNext();
+            return _server.AddGroup(string.Empty, true, updateRate, clientHandle, deadband, localeId);
         }
     }
 }
