@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OpcDaClient
+namespace OpcDaClient.DeviceXPlorer
 {
-    public class DaNode
+    public enum DxpDeviceType
     {
-        public virtual string ItemId { get; set; }
+        Unknown,
+        Bit,
+        Byte,
+        Word,
     }
 }

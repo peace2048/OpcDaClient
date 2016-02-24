@@ -72,7 +72,7 @@ namespace OpcDaClient
             Interlocked.Exchange(ref _server, null)?.Dispose();
         }
 
-        public void Read(IEnumerable<DaItem> items)
+        public void Read(IEnumerable<IDaItem> items)
         {
             _logger.Trace($"Read( {items} )");
             if (items == null)
@@ -93,10 +93,10 @@ namespace OpcDaClient
                 .Sum();
         }
 
-        private int[] GetServerHandles(IEnumerable<DaItem> items)
+        private int[] GetServerHandles(IEnumerable<IDaItem> items)
         {
             return items.Select(_ => _serverHandles.GetOrAdd(
-                _.Node.ItemId,
+                _.ItemId,
                 itemId =>
                 {
                     var def = new OpcItemDefine { IsActive = true, ItemId = itemId, ClientHandle = _clientHandleSequence.GetNext() };
@@ -106,7 +106,7 @@ namespace OpcDaClient
                 .ToArray();
         }
 
-        public DaMonitor Watch(IEnumerable<DaItem> items, TimeSpan updateRate, float deadband, int localeId)
+        public DaMonitor Watch(IEnumerable<IDaItem> items, TimeSpan updateRate, float deadband, int localeId)
         {
             var monitor = new DaMonitor();
             monitor.AddRange(items);
@@ -121,10 +121,10 @@ namespace OpcDaClient
             monitor.Attach(group, _clientHandleSequence);
         }
 
-        public void Write(IEnumerable<DaItem> items)
+        public void Write(IEnumerable<IDaItem> items)
         {
             var handles = GetServerHandles(items);
-            var values = items.Select(_ => _.RawValue).ToArray();
+            var values = items.Select(_ => _.Result.Value).ToArray();
             var errors = _group.Write(handles, values);
             items.Zip(errors,
                 (item, err) =>

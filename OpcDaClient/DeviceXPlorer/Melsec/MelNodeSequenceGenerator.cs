@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace OpcDaClient.Melsec
+namespace OpcDaClient.DeviceXPlorer.Melsec
 {
     public class MelNodeSequenceGenerator
     {
@@ -19,13 +19,13 @@ namespace OpcDaClient.Melsec
 
         public MelNode CreateNode(int length)
         {
-            var r = new MelNode { Address = NextAddress, Device = Device, Length = length };
+            var r = new MelNode { Address = NextAddress, Device = Device, Size = length };
             NextAddress += length;
             return r;
         }
-        public DaItem<T> CreateDaItem<T>(int length)
+        public DxpItem<T> CreateDaItem<T>(int length)
         {
-            return new DaItem<T> { Node = CreateNode(length) };
+            return new DxpItem<T> { Node = CreateNode(length) };
         }
 
     }

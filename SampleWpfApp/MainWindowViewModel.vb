@@ -1,24 +1,26 @@
-﻿Imports System.Reactive.Linq
+﻿Option Explicit On
+Option Strict On
+Option Infer On
+
+Imports System.Reactive.Linq
+Imports Autofac
 Imports OpcDaClient
-Imports OpcDaClient.Melsec
+Imports OpcDaClient.DeviceXPlorer.Melsec
 Imports Reactive.Bindings
 
 Public Class MainWindowViewModel
+
+    Private _compositeDisposable As New System.Reactive.Disposables.CompositeDisposable()
 
     Public Sub New()
 
         If GalaSoft.MvvmLight.ViewModelBase.IsInDesignModeStatic Then
             Return
         End If
-        Dim ioc = GalaSoft.MvvmLight.Ioc.SimpleIoc.Default
-        ioc.Register(Of IServerFactory)(Function() New ServerFactory())
-        ioc.Register(Of DaClient)()
 
-        Dim opc = ioc.GetInstance(Of DaClient)()
-        opc.Connect("TAKEBISHI.Dxp")
-        Dim item = New DaItem With {.Node = New DaNode With {.ItemId = "Device1.D0"}}
-        opc.Read({item})
-        opc.Watch(LineProgresses.SelectMany(Function(a) a.WatchItems), TimeSpan.FromSeconds(3), 0, 0)
+        Dim opc = My.Application.Container.Resolve(Of DaClient)()
+
+        _compositeDisposable.Add(opc.Watch(LineProgresses.SelectMany(Function(a) DaUtil.GetMonitoredDaItem(a)), TimeSpan.FromSeconds(3), 0, 0))
     End Sub
 
     Public ReadOnly Property LineProgresses As Progress() =
@@ -30,21 +32,12 @@ Public Class MainWindowViewModel
 
     Public Class Progress
 
-        Public Sub New(baseAddress As Integer)
-            Dim gen = New MelNodeSequenceGenerator(MelDevice.D, baseAddress)
-            Dim planItem = gen.CreateDaItem(Of Short)(1)
-            Dim actualItem = gen.CreateDaItem(Of Short)(1)
-            WatchItems = {planItem, actualItem}
-            Plan = planItem.ToReactiveProperty()
-            Actual = actualItem.ToReactiveProperty()
-            Diff = Observable.CombineLatest(planItem, actualItem, Function(p, a) a - p).ToReactiveProperty()
+        Public Sub New(startAddress As Integer)
         End Sub
 
-        Public ReadOnly WatchItems As IEnumerable(Of DaItem)
-
-        Public ReadOnly Property Plan As ReactiveProperty(Of Short)
-        Public ReadOnly Property Actual As ReactiveProperty(Of Short)
-        Public ReadOnly Property Diff As ReactiveProperty(Of Short)
+        Public ReadOnly Property Plan As ItemInt16 = New ItemInt16(MelDevice.D, 0)
+        Public ReadOnly Property Actual As ItemInt16 = New ItemInt16(MelDevice.D, 1)
+        Public ReadOnly Property Diff As ReactiveProperty(Of Int16) = Observable.CombineLatest(Plan, Actual, Function(plan, actual) actual - plan).ToReactiveProperty()
 
     End Class
 End Class

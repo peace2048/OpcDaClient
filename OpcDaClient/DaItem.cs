@@ -4,9 +4,9 @@ using System.Reactive.Linq;
 
 namespace OpcDaClient
 {
-    public class DaItem
+    public class DaItem : IDaItem
     {
-        public DaNode Node { get; set; }
+        public string ItemId { get; set; }
         public object RawValue { get { return Result.Value; } set { Result.Value = value; } }
         public DaValue Result { get; private set; } = new DaValue();
     }

@@ -9,7 +9,7 @@ using OpcDaClient.Rcw;
 
 namespace OpcDaClient
 {
-    public class DaMonitor : IDisposable, IObservable<List<DaItem>>
+    public class DaMonitor : IDisposable, IObservable<List<IDaItem>>
     {
         private OpcGroup _group;
         private List<ItemClass> _items = new List<ItemClass>();
@@ -19,7 +19,7 @@ namespace OpcDaClient
         {
         }
 
-        public void Add(DaItem item)
+        public void Add(IDaItem item)
         {
             if (_group != null)
             {
@@ -33,11 +33,11 @@ namespace OpcDaClient
             }
         }
 
-        public void AddRange(IEnumerable<DaItem> items)
+        public void AddRange(IEnumerable<IDaItem> items)
         {
             if (_group != null)
             {
-                var defs = items.Select(_ => new OpcItemDefine { IsActive = true, ItemId = _.Node.ItemId, ClientHandle = _clientHandleSequence.GetNext() }).ToArray();
+                var defs = items.Select(_ => new OpcItemDefine { IsActive = true, ItemId = _.ItemId, ClientHandle = _clientHandleSequence.GetNext() }).ToArray();
                 var results = _group.AddItems(defs);
                 _items.AddRange(
                     items.Zip(defs, (item, def) => new ItemClass { Item = item, ClientHandle = def.ClientHandle })
@@ -62,7 +62,7 @@ namespace OpcDaClient
             }
             _group = group;
             _clientHandleSequence = sequence;
-            var defs = _items.Select(_ => new OpcItemDefine { ClientHandle = _clientHandleSequence.GetNext(), IsActive = true, ItemId = _.Item.Node.ItemId }).ToArray();
+            var defs = _items.Select(_ => new OpcItemDefine { ClientHandle = _clientHandleSequence.GetNext(), IsActive = true, ItemId = _.Item.ItemId }).ToArray();
             var results = _group.AddItems(defs);
             _items.Zip(defs, (item, def) =>
             {
@@ -99,16 +99,16 @@ namespace OpcDaClient
             _disposable.Dispose();
         }
 
-        private Subject<List<DaItem>> _subject = new Subject<List<DaItem>>();
+        private Subject<List<IDaItem>> _subject = new Subject<List<IDaItem>>();
 
-        public IDisposable Subscribe(IObserver<List<DaItem>> observer)
+        public IDisposable Subscribe(IObserver<List<IDaItem>> observer)
         {
             return _subject.Subscribe(observer);
         }
 
         private class ItemClass
         {
-            public DaItem Item { get; set; }
+            public IDaItem Item { get; set; }
             public int ServerHandle { get; set; }
             public int ClientHandle { get; set; }
         }

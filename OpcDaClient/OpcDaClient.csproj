@@ -65,18 +65,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeviceXPlorer\DxpDeviceType.cs" />
     <Compile Include="DaMonitor.cs" />
-    <Compile Include="DaNode.cs" />
     <Compile Include="DaItem.cs" />
     <Compile Include="DaValue.cs" />
     <Compile Include="DefaultItemValueConverter.cs" />
+    <Compile Include="DeviceXPlorer\DxpItem.cs" />
+    <Compile Include="DeviceXPlorer\DxpNode.cs" />
+    <Compile Include="IDaItem.cs" />
     <Compile Include="IItemValueConverter.cs" />
     <Compile Include="ILog.cs" />
     <Compile Include="IServerFactory.cs" />
     <Compile Include="LogManager.cs" />
-    <Compile Include="Melsec\MelNode.cs" />
+    <Compile Include="DeviceXPlorer\Melsec\MelItem.cs" />
+    <Compile Include="DeviceXPlorer\Melsec\MelNode.cs" />
     <Compile Include="DaClient.cs" />
-    <Compile Include="Melsec\MelNodeSequenceGenerator.cs" />
+    <Compile Include="DeviceXPlorer\Melsec\MelNodeSequenceGenerator.cs" />
     <Compile Include="Rcw\CancelCompleteEventArgs.cs" />
     <Compile Include="Rcw\DataChangeEventArgs.cs" />
     <Compile Include="Rcw\OpcBrowseDirection.cs" />
@@ -105,6 +109,7 @@
   <ItemGroup>
     <Content Include="lib\Opc.Ua.Core.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
