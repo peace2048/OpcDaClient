@@ -8,18 +8,18 @@ namespace OpcDaClient.DeviceXPlorer.Melsec
 {
     public class MelNodeSequenceGenerator
     {
-        public MelNodeSequenceGenerator(MelDevice device, int startAddress)
+        public MelNodeSequenceGenerator(DxpDevice device, int startAddress)
         {
             Device = device;
             NextAddress = startAddress;
         }
 
-        public MelDevice Device { get; set; }
+        public DxpDevice Device { get; set; }
         public int NextAddress { get; set; }
 
-        public MelNode CreateNode(int length)
+        public DxpNode CreateNode(int length)
         {
-            var r = new MelNode { Address = NextAddress, Device = Device, Size = length };
+            var r = new DxpNode { Address = NextAddress, Device = Device, Size = length };
             NextAddress += length;
             return r;
         }

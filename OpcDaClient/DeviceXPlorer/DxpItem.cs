@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OpcDaClient.DeviceXPlorer
 {
-    public class DxpItem<T> : IDaItem
+    public class DxpItem : IDaItem
     {
         public string ItemId { get { return Node.ItemId; } }
 
@@ -15,7 +15,7 @@ namespace OpcDaClient.DeviceXPlorer
         public DaValue Result { get; private set; } = new DaValue();
     }
 
-    public class DxpItem : DxpItem<object>
+    public class DxpItem<T> : DxpItem
     {
 
     }

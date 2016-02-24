@@ -131,6 +131,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DaUtil.vb" />
+    <Compile Include="EnumerableEx.vb" />
+    <Compile Include="EnumerableExtensions.vb" />
     <Compile Include="Item.vb" />
     <Compile Include="MainWindow.xaml.vb">
       <DependentUpon>MainWindow.xaml</DependentUpon>

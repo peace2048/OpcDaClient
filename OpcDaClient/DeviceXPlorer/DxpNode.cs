@@ -1,16 +1,85 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace OpcDaClient.DeviceXPlorer
 {
     public class DxpNode
     {
-        public virtual string ItemId { get; set; }
-        public DxpDeviceType DeviceType { get; set; }
-        public int Address { get; set; }
-        public int Size { get; set; }
+        private string _accessPath;
+        private int _address;
+        private DxpDevice _device;
+        private string _itemId;
+        private int _size;
+
+        public string AccessPath
+        {
+            get { return _accessPath; }
+            set { _accessPath = value; BuildItemId(); }
+        }
+
+        public int Address
+        {
+            get { return _address; }
+            set { _address = value; BuildItemId(); }
+        }
+
+        public DxpDevice Device
+        {
+            get { return _device; }
+            set { _device = value; BuildItemId(); }
+        }
+
+        public string ItemId
+        {
+            get { return _itemId; }
+            set { _itemId = value; Parse(); }
+        }
+
+        public int Size
+        {
+            get { return _size; }
+            set { _size = value; BuildItemId(); }
+        }
+
+        protected virtual void BuildItemId()
+        {
+            if (Device == null || Device.DeviceType == DxpDeviceType.Unknown)
+            {
+                return;
+            }
+            var sb = new StringBuilder();
+            if (!string.IsNullOrEmpty(AccessPath))
+            {
+                sb.Append(AccessPath).Append(".");
+            }
+            sb.Append(Device.Name);
+            switch (Device.AddressNotation)
+            {
+                case AddressNotation.Octal:
+                    sb.Append(Convert.ToString(Address, 8));
+                    break;
+
+                case AddressNotation.Hexadecimal:
+                    sb.Append(Address.ToString("X"));
+                    break;
+
+                default:
+                    sb.Append(Address);
+                    break;
+            }
+            if (Size > 1)
+            {
+                sb.Append(":A").Append(Size);
+            }
+            ItemId = sb.ToString();
+        }
+
+        protected virtual void Parse()
+        {
+            AccessPath = string.Empty;
+            Address = 0;
+            Device = DxpDevice.Unknown;
+            Size = 0;
+        }
     }
 }
