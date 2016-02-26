@@ -6,7 +6,6 @@ Imports System.Reactive.Linq
 Imports Autofac
 Imports OpcDaClient
 Imports OpcDaClient.DeviceXPlorer
-Imports OpcDaClient.DeviceXPlorer.Melsec
 Imports Reactive.Bindings
 
 Public Class MainWindowViewModel
@@ -29,7 +28,7 @@ Public Class MainWindowViewModel
     Public Class Progress
 
         Public Sub New(startAddress As Integer)
-            DaUtil.GetProperties(Of DxpItem)(Me).ToList().ForEach(Sub(item) item.Node.Address += startAddress)
+            DaUtil.GetProperties(Of IDxpItem)(Me).ToList().ForEach(Sub(item) item.Node.Address += startAddress)
         End Sub
 
         <Monitored> Public ReadOnly Property Plan As ItemInt16 = New ItemInt16(MelDevice.D, 0)

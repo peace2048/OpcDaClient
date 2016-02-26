@@ -8,6 +8,7 @@ namespace OpcDaClient.DeviceXPlorer
         private string _accessPath;
         private int _address;
         private DxpDevice _device;
+        private int _extNumber;
         private string _itemId;
         private int _size;
 
@@ -29,6 +30,12 @@ namespace OpcDaClient.DeviceXPlorer
             set { _device = value; BuildItemId(); }
         }
 
+        public int ExtNumber
+        {
+            get { return _extNumber; }
+            set { _extNumber = value; BuildItemId(); }
+        }
+
         public string ItemId
         {
             get { return _itemId; }
@@ -39,6 +46,11 @@ namespace OpcDaClient.DeviceXPlorer
         {
             get { return _size; }
             set { _size = value; BuildItemId(); }
+        }
+
+        public override string ToString()
+        {
+            return ItemId ?? base.ToString();
         }
 
         protected virtual void BuildItemId()
@@ -53,6 +65,10 @@ namespace OpcDaClient.DeviceXPlorer
                 sb.Append(AccessPath).Append(".");
             }
             sb.Append(Device.Name);
+            if (Device.UseBlockNumber)
+            {
+                sb.Append(ExtNumber).Append(':');
+            }
             switch (Device.AddressNotation)
             {
                 case AddressNotation.Octal:

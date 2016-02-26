@@ -1,27 +1,51 @@
 ﻿namespace OpcDaClient.DeviceXPlorer
 {
-    public class DxpDevice
+    public class DxpBitDevice : DxpDevice
     {
-        public static readonly DxpDevice Unknown = new DxpDevice(string.Empty, string.Empty, DxpDeviceType.Unknown, AddressNotation.Unknown);
-        public static readonly DxpDevice UnknownBitDevice = new DxpDevice(string.Empty, string.Empty, DxpDeviceType.Bit, AddressNotation.Unknown);
-        public static readonly DxpDevice UnknownByteDevice = new DxpDevice(string.Empty, string.Empty, DxpDeviceType.Byte, AddressNotation.Unknown);
-        public static readonly DxpDevice UnknownWordDevice = new DxpDevice(string.Empty, string.Empty, DxpDeviceType.Word, AddressNotation.Unknown);
-
-        internal DxpDevice(string name, string description, DxpDeviceType deviceType, AddressNotation notation)
+        public DxpBitDevice(string name, AddressNotation notation, string description)
         {
             Name = name;
-            Description = description;
-            DeviceType = deviceType;
             AddressNotation = notation;
+            Description = description;
+            DeviceType = DxpDeviceType.Bit;
         }
+    }
 
-        private DxpDevice()
+    public class DxpDevice
+    {
+        public static readonly DxpDevice Unknown = new DxpDevice();
+
+        internal DxpDevice()
         {
         }
 
-        public AddressNotation AddressNotation { get; private set; }
-        public string Description { get; private set; }
-        public DxpDeviceType DeviceType { get; private set; }
-        public string Name { get; private set; }
+        public AddressNotation AddressNotation { get; internal set; }
+        public bool CanByteAccess { get; internal set; }
+        public string Description { get; internal set; }
+        public DxpDeviceType DeviceType { get; internal set; }
+        public string Name { get; internal set; }
+        public bool UseBlockNumber { get; internal set; }
+    }
+
+    public class DxpWordDevice : DxpDevice
+    {
+        public DxpWordDevice(string name, AddressNotation notation, string description)
+        {
+            Name = name;
+            AddressNotation = notation;
+            Description = description;
+            DeviceType = DxpDeviceType.Word;
+        }
+    }
+
+    public class DxpWordDeviceWithBlockNumber : DxpDevice
+    {
+        public DxpWordDeviceWithBlockNumber(string name, AddressNotation notation, string description)
+        {
+            Name = name;
+            AddressNotation = notation;
+            Description = description;
+            UseBlockNumber = true;
+        }
     }
 }

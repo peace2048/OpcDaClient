@@ -74,14 +74,15 @@
     <Compile Include="DefaultItemValueConverter.cs" />
     <Compile Include="DeviceXPlorer\DxpItem.cs" />
     <Compile Include="DeviceXPlorer\DxpNode.cs" />
-    <Compile Include="DeviceXPlorer\Melsec\MelDevice.cs" />
+    <Compile Include="DeviceXPlorer\DxpNodeBuilder.cs" />
+    <Compile Include="DeviceXPlorer\DxpNodeExtensions.cs" />
+    <Compile Include="DeviceXPlorer\MelDevice.cs" />
     <Compile Include="IDaItem.cs" />
     <Compile Include="IItemValueConverter.cs" />
     <Compile Include="ILog.cs" />
     <Compile Include="IServerFactory.cs" />
     <Compile Include="LogManager.cs" />
     <Compile Include="DaClient.cs" />
-    <Compile Include="DeviceXPlorer\Melsec\MelNodeSequenceGenerator.cs" />
     <Compile Include="Rcw\CancelCompleteEventArgs.cs" />
     <Compile Include="Rcw\DataChangeEventArgs.cs" />
     <Compile Include="Rcw\OpcBrowseDirection.cs" />

@@ -2,12 +2,10 @@
 Imports System.Reactive.Linq
 Imports System.Reactive.Subjects
 Imports System.Runtime.CompilerServices
-Imports OpcDaClient
 Imports OpcDaClient.DeviceXPlorer
-Imports OpcDaClient.DeviceXPlorer.Melsec
 
 Public Class ItemBase(Of T)
-    Inherits DxpItem
+    Inherits DxpItem(Of T)
     Implements INotifyPropertyChanged, IObservable(Of T)
 
     Public Event PropertyChanged As PropertyChangedEventHandler Implements INotifyPropertyChanged.PropertyChanged
@@ -25,7 +23,7 @@ Public Class ItemBase(Of T)
                 End Sub)
     End Sub
 
-    Public Property Value As T
+    Public Overrides Property Value As T
         Get
             Return _Value
         End Get
