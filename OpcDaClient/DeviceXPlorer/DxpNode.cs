@@ -87,7 +87,7 @@ namespace OpcDaClient.DeviceXPlorer
             {
                 sb.Append(":A").Append(Size);
             }
-            ItemId = sb.ToString();
+            _itemId = sb.ToString();
         }
 
         protected virtual void Parse()

@@ -20,13 +20,13 @@ namespace OpcDaClient.Rcw
 
         public OpcGroup AddGroup(string name, bool isActive, int requestedUpdateRate, int clientHandle, float deadband, int localeId)
         {
-            var hDeadband = System.Runtime.InteropServices.GCHandle.Alloc(deadband, System.Runtime.InteropServices.GCHandleType.Pinned);
+            var hDeadband = GCHandle.Alloc(deadband, GCHandleType.Pinned);
             try
             {
                 var timeBias = IntPtr.Zero;
                 var serverHandle = 0;
                 var revisedUpdateRate = 0;
-                var iid = typeof(OpcRcw.Da.IOPCItemMgt).GUID;
+                var iid = typeof(IOPCItemMgt).GUID;
                 object ppUnk = null;
                 _server.AddGroup(
                     name,
@@ -69,7 +69,7 @@ namespace OpcDaClient.Rcw
 
         public OpcGroup GetGroupByName(string name)
         {
-            var iid = typeof(OpcRcw.Da.IOPCItemMgt).GUID;
+            var iid = typeof(IOPCItemMgt).GUID;
             object ppUnk = null;
             _server.GetGroupByName(name, ref iid, out ppUnk);
             return new OpcGroup(ppUnk);
@@ -86,8 +86,8 @@ namespace OpcDaClient.Rcw
         {
             var ppStatus = IntPtr.Zero;
             _server.GetStatus(out ppStatus);
-            var status = Marshal.PtrToStructure<OpcRcw.Da.OPCSERVERSTATUS>(ppStatus);
-            Marshal.DestroyStructure<OpcRcw.Da.OPCSERVERSTATUS>(ppStatus);
+            var status = Marshal.PtrToStructure<OPCSERVERSTATUS>(ppStatus);
+            Marshal.DestroyStructure<OPCSERVERSTATUS>(ppStatus);
             Marshal.FreeCoTaskMem(ppStatus);
             return new OpcServerStatus
             {
@@ -109,7 +109,7 @@ namespace OpcDaClient.Rcw
             var pdwCount = 0;
             var pdwLcid = IntPtr.Zero;
             _server.QueryAvailableLocaleIDs(out pdwCount, out pdwLcid);
-            return Opc.Ua.Com.ComUtils.GetInt32s(ref pdwLcid, pdwCount, true);
+            return ComUtils.GetInt32s(ref pdwLcid, pdwCount, true);
         }
 
         public void QueryAvailableProperties(string itemId)
@@ -121,9 +121,9 @@ namespace OpcDaClient.Rcw
             _server.QueryAvailableProperties(itemId, out pdwCount, out ppPropertyIds, out ppDescriptions, out ppvtDataTypes);
             if (pdwCount > 0)
             {
-                var ids = Opc.Ua.Com.ComUtils.GetInt32s(ref ppPropertyIds, pdwCount, true);
-                var descs = Opc.Ua.Com.ComUtils.GetUnicodeStrings(ref ppDescriptions, pdwCount, true);
-                var types = Opc.Ua.Com.ComUtils.GetInt16s(ref ppvtDataTypes, pdwCount, true);
+                var ids = ComUtils.GetInt32s(ref ppPropertyIds, pdwCount, true);
+                var descs = ComUtils.GetUnicodeStrings(ref ppDescriptions, pdwCount, true);
+                var types = ComUtils.GetInt16s(ref ppvtDataTypes, pdwCount, true);
             }
         }
 
