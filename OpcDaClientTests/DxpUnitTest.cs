@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpcDaClient.DeviceXPlorer;
 using FluentAssertions;
+using Moq;
+using OpcDaClient;
+using OpcDaClient.Rcw;
 
 namespace OpcDaClientTests
 {
