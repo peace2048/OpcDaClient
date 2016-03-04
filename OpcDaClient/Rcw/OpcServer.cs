@@ -3,13 +3,12 @@ using Opc.Ua.Com.Client;
 using OpcRcw.Comn;
 using OpcRcw.Da;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace OpcDaClient.Rcw
 {
-    public class OpcServer : IDisposable
+    public class OpcServer : IOpcServer
     {
         private OpcServerImpl _server;
 
@@ -18,7 +17,9 @@ namespace OpcDaClient.Rcw
             _server = new OpcServerImpl { Unknown = comInstance };
         }
 
-        public OpcGroup AddGroup(string name, bool isActive, int requestedUpdateRate, int clientHandle, float deadband, int localeId)
+        public bool IsSupportAsyncGroup { get { return true; } }
+
+        public IOpcGroupAsync AddAsyncGroup(string name, bool isActive, int requestedUpdateRate, int clientHandle, float deadband, int localeId)
         {
             var hDeadband = GCHandle.Alloc(deadband, GCHandleType.Pinned);
             try
@@ -48,6 +49,32 @@ namespace OpcDaClient.Rcw
             }
         }
 
+        public IOpcGroup AddGroup(string name, bool isActive, int requestedUpdateRate, int clientHandle, float deadband, int localeId)
+        {
+            return AddAsyncGroup(name, isActive, requestedUpdateRate, clientHandle, deadband, localeId);
+        }
+
+        public string[] BrowseAccessPaths(string itemId)
+        {
+            IEnumString obj = null;
+            _server.BrowseAccessPaths(itemId, out obj);
+            var enumString = new EnumString(obj, 100);
+            return Enumerable.Repeat(enumString, int.MaxValue).Select(_ => _.Next()).TakeWhile(_ => _ != null).ToArray();
+        }
+
+        public string[] BrowseItemIds(OpcBrowseType browseType, string filterCriteria, short dataTypeFilter, int accessRightsFilter)
+        {
+            IEnumString ppIEnumString = null;
+            _server.BrowseOPCItemIDs((OPCBROWSETYPE)browseType, filterCriteria, dataTypeFilter, accessRightsFilter, out ppIEnumString);
+            var enumString = new EnumString(ppIEnumString, 100);
+            return Enumerable.Repeat(enumString, int.MaxValue).Select(_ => _.Next()).TakeWhile(_ => _ != null).ToArray();
+        }
+
+        public void ChangeBrowsePosition(OpcBrowseDirection direction, string name)
+        {
+            _server.ChangeBrowsePosition((OPCBROWSEDIRECTION)direction, name);
+        }
+
         public void Dispose()
         {
             _server.Dispose();
@@ -67,12 +94,19 @@ namespace OpcDaClient.Rcw
             return ppString;
         }
 
-        public OpcGroup GetGroupByName(string name)
+        public IOpcGroup GetGroupByName(string name)
         {
             var iid = typeof(IOPCItemMgt).GUID;
             object ppUnk = null;
             _server.GetGroupByName(name, ref iid, out ppUnk);
             return new OpcGroup(ppUnk);
+        }
+
+        public string GetItemId(string itemDataId)
+        {
+            string itemId = null;
+            _server.GetItemID(itemDataId, out itemId);
+            return itemId;
         }
 
         public int GetLocaleId()
@@ -132,34 +166,6 @@ namespace OpcDaClient.Rcw
             _server.RemoveGroup(serverHandle, force ? 1 : 0);
         }
 
-        public string[] BrowseAccessPaths(string itemId)
-        {
-            IEnumString obj = null;
-            _server.BrowseAccessPaths(itemId, out obj);
-            var enumString = new EnumString(obj, 100);
-            return Enumerable.Repeat(enumString, int.MaxValue).Select(_ => _.Next()).TakeWhile(_ => _ != null).ToArray();
-        }
-
-        public string[] BrowseItemIds(OpcBrowseType browseType, string filterCriteria, short dataTypeFilter, int accessRightsFilter)
-        {
-            IEnumString ppIEnumString = null;
-            _server.BrowseOPCItemIDs((OPCBROWSETYPE)browseType, filterCriteria, dataTypeFilter, accessRightsFilter, out ppIEnumString);
-            var enumString = new EnumString(ppIEnumString, 100);
-            return Enumerable.Repeat(enumString, int.MaxValue).Select(_ => _.Next()).TakeWhile(_ => _ != null).ToArray();
-        }
-
-        public void ChangeBrowsePosition(OpcBrowseDirection direction, string name)
-        {
-            _server.ChangeBrowsePosition((OPCBROWSEDIRECTION)direction, name);
-        }
-
-        public string GetItemId(string itemDataId)
-        {
-            string itemId = null;
-            _server.GetItemID(itemDataId, out itemId);
-            return itemId;
-        }
-
         public void SetClientName(string name)
         {
             _server.SetClientName(name);
@@ -179,6 +185,48 @@ namespace OpcDaClient.Rcw
                 {
                     var server = BeginComCall<IOPCServer>(methodName, true);
                     server.AddGroup(szName, bActive, dwRequestedUpdateRate, hClientGroup, pTimeBias, pPercentDeadband, dwLCID, out phServerGroup, out pRevisedUpdateRate, riid, out ppUnk);
+                }
+                finally
+                {
+                    EndComCall(methodName);
+                }
+            }
+
+            public void BrowseAccessPaths(string szItemID, out IEnumString pIEnumString)
+            {
+                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.BrowseAccessPaths);
+                try
+                {
+                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
+                    server.BrowseAccessPaths(szItemID, out pIEnumString);
+                }
+                finally
+                {
+                    EndComCall(methodName);
+                }
+            }
+
+            public void BrowseOPCItemIDs(OPCBROWSETYPE dwBrowseFilterType, string szFilterCriteria, short vtDataTypeFilter, int dwAccessRightsFilter, out IEnumString ppIEnumString)
+            {
+                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.BrowseOPCItemIDs);
+                try
+                {
+                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
+                    server.BrowseOPCItemIDs(dwBrowseFilterType, szFilterCriteria, vtDataTypeFilter, dwAccessRightsFilter, out ppIEnumString);
+                }
+                finally
+                {
+                    EndComCall(methodName);
+                }
+            }
+
+            public void ChangeBrowsePosition(OPCBROWSEDIRECTION dwBrowseDirection, string szString)
+            {
+                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.ChangeBrowsePosition);
+                try
+                {
+                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
+                    server.ChangeBrowsePosition(dwBrowseDirection, szString);
                 }
                 finally
                 {
@@ -235,6 +283,20 @@ namespace OpcDaClient.Rcw
                 {
                     var server = BeginComCall<IOPCServer>(methodName, true);
                     server.GetGroupByName(szName, ref riid, out ppUnk);
+                }
+                finally
+                {
+                    EndComCall(methodName);
+                }
+            }
+
+            public void GetItemID(string szItemDataID, out string szItemID)
+            {
+                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.GetItemID);
+                try
+                {
+                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
+                    server.GetItemID(szItemDataID, out szItemID);
                 }
                 finally
                 {
@@ -326,6 +388,20 @@ namespace OpcDaClient.Rcw
                 }
             }
 
+            public void QueryOrganization(out OPCNAMESPACETYPE pNameSpaceType)
+            {
+                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.QueryOrganization);
+                try
+                {
+                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
+                    server.QueryOrganization(out pNameSpaceType);
+                }
+                finally
+                {
+                    EndComCall(methodName);
+                }
+            }
+
             public void RemoveGroup(int hServerGroup, int bForce)
             {
                 var methodName = nameof(IOPCServer) + "." + nameof(IOPCServer.RemoveGroup);
@@ -361,76 +437,6 @@ namespace OpcDaClient.Rcw
                 {
                     var server = BeginComCall<IOPCCommon>(methodName, true);
                     server.SetLocaleID(dwLcid);
-                }
-                finally
-                {
-                    EndComCall(methodName);
-                }
-            }
-
-            public void BrowseAccessPaths(string szItemID, out IEnumString pIEnumString)
-            {
-                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.BrowseAccessPaths);
-                try
-                {
-                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
-                    server.BrowseAccessPaths(szItemID, out pIEnumString);
-                }
-                finally
-                {
-                    EndComCall(methodName);
-                }
-            }
-
-            public void BrowseOPCItemIDs(OPCBROWSETYPE dwBrowseFilterType, string szFilterCriteria, short vtDataTypeFilter, int dwAccessRightsFilter, out IEnumString ppIEnumString)
-            {
-                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.BrowseOPCItemIDs);
-                try
-                {
-                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
-                    server.BrowseOPCItemIDs(dwBrowseFilterType, szFilterCriteria, vtDataTypeFilter, dwAccessRightsFilter, out ppIEnumString);
-                }
-                finally
-                {
-                    EndComCall(methodName);
-                }
-            }
-
-            public void ChangeBrowsePosition(OPCBROWSEDIRECTION dwBrowseDirection, string szString)
-            {
-                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.ChangeBrowsePosition);
-                try
-                {
-                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
-                    server.ChangeBrowsePosition(dwBrowseDirection, szString);
-                }
-                finally
-                {
-                    EndComCall(methodName);
-                }
-            }
-
-            public void GetItemID(string szItemDataID, out string szItemID)
-            {
-                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.GetItemID);
-                try
-                {
-                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
-                    server.GetItemID(szItemDataID, out szItemID);
-                }
-                finally
-                {
-                    EndComCall(methodName);
-                }
-            }
-
-            public void QueryOrganization(out OPCNAMESPACETYPE pNameSpaceType)
-            {
-                var methodName = nameof(IOPCBrowseServerAddressSpace) + "." + nameof(IOPCBrowseServerAddressSpace.QueryOrganization);
-                try
-                {
-                    var server = BeginComCall<IOPCBrowseServerAddressSpace>(methodName, true);
-                    server.QueryOrganization(out pNameSpaceType);
                 }
                 finally
                 {

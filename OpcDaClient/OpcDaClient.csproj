@@ -85,6 +85,9 @@
     <Compile Include="DaClient.cs" />
     <Compile Include="Rcw\CancelCompleteEventArgs.cs" />
     <Compile Include="Rcw\DataChangeEventArgs.cs" />
+    <Compile Include="Rcw\IOpcGroup.cs" />
+    <Compile Include="Rcw\IOpcGroupAsync.cs" />
+    <Compile Include="Rcw\IOpcServer.cs" />
     <Compile Include="Rcw\OpcBrowseDirection.cs" />
     <Compile Include="Rcw\OpcBrowseType.cs" />
     <Compile Include="Rcw\OpcDataSource.cs" />

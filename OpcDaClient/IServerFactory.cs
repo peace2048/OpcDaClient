@@ -9,6 +9,6 @@ namespace OpcDaClient
 {
     public interface IServerFactory
     {
-        OpcServer CreateFromProgId(string progId);
+        IOpcServer CreateFromProgId(string progId);
     }
 }

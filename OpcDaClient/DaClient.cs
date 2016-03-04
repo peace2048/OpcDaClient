@@ -14,8 +14,8 @@ namespace OpcDaClient
 
         private readonly Sequence _clientHandleSequence = new Sequence(0, int.MaxValue);
         private IServerFactory _factory;
-        private OpcGroup _group;
-        private OpcServer _server;
+        private IOpcGroup _group;
+        private IOpcServer _server;
         private ConcurrentDictionary<string, int> _serverHandles;
 
         public DaClient(IServerFactory factory)
@@ -117,7 +117,7 @@ namespace OpcDaClient
         public void Watch(DaMonitor monitor, TimeSpan updateRate, float deadband, int localeId)
         {
             var clientHandle = _clientHandleSequence.GetNext();
-            var group = _server.AddGroup(string.Empty, true, (int)updateRate.TotalMilliseconds, clientHandle, deadband, localeId);
+            var group = _server.AddAsyncGroup(string.Empty, true, (int)updateRate.TotalMilliseconds, clientHandle, deadband, localeId);
             monitor.Attach(group, _clientHandleSequence);
         }
 
@@ -135,7 +135,7 @@ namespace OpcDaClient
                 .Sum();
         }
 
-        internal OpcGroup CreateGroup(int updateRate, float deadband, int localeId)
+        internal IOpcGroup CreateGroup(int updateRate, float deadband, int localeId)
         {
             var clientHandle = _clientHandleSequence.GetNext();
             return _server.AddGroup(string.Empty, true, updateRate, clientHandle, deadband, localeId);

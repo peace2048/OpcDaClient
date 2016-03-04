@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace OpcDaClient.Rcw
 {
-    public class OpcGroup : IDisposable
+    public class OpcGroup : IOpcGroupAsync
     {
         private OPCDataCallbackImpl _callback;
         private ConnectionPoint _connectionPoint;

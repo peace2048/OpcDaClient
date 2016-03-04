@@ -11,7 +11,7 @@ namespace OpcDaClient
 {
     public class DaMonitor : IDisposable, IObservable<List<IDaItem>>
     {
-        private OpcGroup _group;
+        private IOpcGroupAsync _group;
         private List<ItemClass> _items = new List<ItemClass>();
         private IDisposable _disposable = Disposable.Empty;
 
@@ -54,7 +54,7 @@ namespace OpcDaClient
         }
 
         private Sequence _clientHandleSequence;
-        internal void Attach(OpcGroup group, Sequence sequence)
+        internal void Attach(IOpcGroupAsync group, Sequence sequence)
         {
             if (_group != null)
             {

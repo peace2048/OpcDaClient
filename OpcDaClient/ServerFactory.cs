@@ -9,7 +9,7 @@ namespace OpcDaClient
 {
     public class ServerFactory : IServerFactory
     {
-        public OpcServer CreateFromProgId(string progId)
+        public IOpcServer CreateFromProgId(string progId)
         {
             using (var factory = new Opc.Ua.Com.ServerFactory())
             {
